@@ -27,8 +27,7 @@ const urlShortner = async function (req, res) {
 
             let url = await urlModel.findOne({
                 longUrl
-            }).select({ longUrl: 1, shortUrl: 1, urlCode: 1 })
-
+            })
             // url exist and return the respose
             if (url) {
                 res.status(200).send({ status: true, data: url })
