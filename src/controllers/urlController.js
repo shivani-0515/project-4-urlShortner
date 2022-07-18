@@ -1,7 +1,7 @@
 
 
 
- urlModel = require("../models/urlModel")
+urlModel = require("../models/urlModel")
 const validUrl = require('valid-url')
 const shortid = require('shortid')
 
