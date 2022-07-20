@@ -1,25 +1,25 @@
 const mongoose = require('mongoose');
-const shortid = require('shortid')
+
 const urlSchema = new mongoose.Schema({
     urlCode: {
-        
         type: String,
         required: true,
         unique: true,
         lowercase: true,
         trim: true,
-        default:shortid.generate
     },
 
     longUrl: {
         type: String,
-        required: true
+        required: true,
+        trim : true
 
     },
     shortUrl: {
         type:String,
         required: true,
-        unique: true
+        unique: true,
+        lowercase : true
       
     }
 
