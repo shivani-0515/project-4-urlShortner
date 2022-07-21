@@ -80,7 +80,7 @@ const getUrl = async function (req, res) {
 
         if (caching) {
 
-            return res.status(302).redirect(caching);
+            return res.status(302).redirect(JSON.parse(caching));
         } else {
 
             const UrlData = await urlModel.findOne({ urlCode });
