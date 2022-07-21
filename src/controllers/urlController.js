@@ -35,34 +35,32 @@ const urlShortner = async function (req, res) {
         let urlCode = shortid.generate()
 
         // check long url if valid using the regex 
-        if (/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g.test(longUrl)) {
+        let regexLongUrl = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g.test(longUrl)
 
-            let url = await urlModel.findOne({ longUrl }).select({ longUrl: 1, shortUrl: 1, urlCode: 1, _id: 0 })
+        if (!regexLongUrl) return res.status(400).send({ status: false, message: 'Invalid longUrl' })
 
-            // url exist and return the respose
-            if (url) {
-                return res.status(200).send({ status: true, data: url })
-            }
-            else {
-                // join the generated short code the the base url
-                const shortUrl = baseUrl + '/' + urlCode
+        let url = await urlModel.findOne({ longUrl }).select({ longUrl: 1, shortUrl: 1, urlCode: 1, _id: 0 })
 
-                let data = {}
-                data.longUrl = longUrl;
-                data.shortUrl = shortUrl;
-                data.urlCode = urlCode
-
-                // invoking the Url model and create to the DB
-
-                await urlModel.create(data)
-
-                let urlData = await urlModel.findOne({ longUrl, shortUrl, urlCode, }, {__v: 0, createdAt: 0, updatedAt: 0,_id:-1 })
-
-                return res.status(201).send({ status: true, data: urlData })
-            }
+        // url exist and return the respose
+        if (url) {
+            return res.status(200).send({ status: true, data: url })
         }
         else {
-            return res.status(400).send({ status: false, message: 'Invalid longUrl' })
+            // join the generated short code the the base url
+            const shortUrl = baseUrl + '/' + urlCode
+
+            let data = {}
+            data.longUrl = longUrl;
+            data.shortUrl = shortUrl;
+            data.urlCode = urlCode
+
+            // invoking the Url model and create to the DB
+
+            await urlModel.create(data)
+
+            let urlData = await urlModel.findOne({ longUrl, shortUrl, urlCode, }, { __v: 0, createdAt: 0, updatedAt: 0, _id: -1 })
+
+            return res.status(201).send({ status: true, data: urlData })
         }
     }
     catch (err) {
@@ -75,12 +73,18 @@ const getUrl = async function (req, res) {
         const urlCode = req.params.urlCode;
         console.log(urlCode)
 
+        if (!shortid.isValid(urlCode)) return res.status(400).send({ status: false, message: "Invalid UrlCode." })
+
+        const UrlData = await urlModel.findOne({ urlCode });
+
+        if (!UrlData) return res.status(404).send({ status: false, message: "this urlCode is not present in our database" });
+
         const caching = await GET_ASYNC(`${req.params.urlCode}`);
         console.log(caching)
 
         if (caching) {
 
-            return res.status(302).redirect(JSON.parse(caching));
+            return res.status(302).redirect(caching);
         } else {
 
             const UrlData = await urlModel.findOne({ urlCode });
@@ -89,7 +93,7 @@ const getUrl = async function (req, res) {
 
             // console.log("UrlData:" + UrlData.longUrl)
 
-            await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(UrlData.longUrl));
+            await SET_ASYNC(`${req.params.urlCode}`, UrlData.longUrl);
 
             return res.status(302).redirect(UrlData.longUrl)
         }
