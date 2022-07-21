@@ -56,7 +56,7 @@ const urlShortner = async function (req, res) {
 
                 await urlModel.create(data)
 
-                let urlData = await urlModel.findOne({}, { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 })
+                let urlData = await urlModel.findOne({ longUrl, shortUrl, urlCode, }, {__v: 0, createdAt: 0, updatedAt: 0,_id:-1 })
 
                 return res.status(201).send({ status: true, data: urlData })
             }
@@ -80,14 +80,14 @@ const getUrl = async function (req, res) {
 
         if (caching) {
 
-            return res.status(302).redirect(JSON.parse(caching));
+            return res.status(302).redirect(caching);
         } else {
 
             const UrlData = await urlModel.findOne({ urlCode });
 
             if (!UrlData) return res.status(404).send({ status: false, message: "this urlCode is not present in our database" });
 
-           // console.log("UrlData:" + UrlData.longUrl)
+            // console.log("UrlData:" + UrlData.longUrl)
 
             await SET_ASYNC(`${req.params.urlCode}`, JSON.stringify(UrlData.longUrl));
 
