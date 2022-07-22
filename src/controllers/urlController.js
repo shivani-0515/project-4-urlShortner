@@ -3,14 +3,14 @@ const urlModel = require("../models/urlModel")
 const shortid = require('shortid')
 const redis = require("redis");
 
-const { promisify } = require("util");
+const{ promisify } = require("util");
 
 const redisClient = redis.createClient(
-    13596,
-    "redis-13596.c301.ap-south-1-1.ec2.cloud.redislabs.com",
+    15401,
+    "redis-15401.c264.ap-south-1-1.ec2.cloud.redislabs.com",
     { no_ready_check: true }
 );
-redisClient.auth("hXtKcFJT91Wg5UnzBwgzO5yb0hN6aAEs", function (err) {
+redisClient.auth("BTcgUnKkuQBHMGEh1lmw1xvDkRLqqid6", function (err) {
     if (err) throw err;
 });
 
@@ -58,7 +58,7 @@ const urlShortner = async function (req, res) {
 
             await urlModel.create(data)
 
-            let urlData = await urlModel.findOne({ longUrl, shortUrl, urlCode, }, { __v: 0, createdAt: 0, updatedAt: 0, _id: -1 })
+            let urlData = await urlModel.findOne({ longUrl, shortUrl, urlCode, }, { __v: 0, createdAt: 0, updatedAt: 0, _id: 0 })
 
             return res.status(201).send({ status: true, data: urlData })
         }
@@ -74,24 +74,18 @@ const getUrl = async function (req, res) {
         console.log(urlCode)
 
         if (!shortid.isValid(urlCode)) return res.status(400).send({ status: false, message: "Invalid UrlCode." })
-
-        const UrlData = await urlModel.findOne({ urlCode });
-
-        if (!UrlData) return res.status(404).send({ status: false, message: "this urlCode is not present in our database" });
-
-        const caching = await GET_ASYNC(`${req.params.urlCode}`);
-        console.log(caching)
+        let caching = await GET_ASYNC(`${req.params.urlCode}`);
+    caching = JSON.parse(caching)
+        
 
         if (caching) {
 
-            return res.status(302).redirect(caching);
+            return res.status(302).redirect(caching.longUrl);
         } else {
-
             const UrlData = await urlModel.findOne({ urlCode });
 
             if (!UrlData) return res.status(404).send({ status: false, message: "this urlCode is not present in our database" });
 
-            // console.log("UrlData:" + UrlData.longUrl)
 
             await SET_ASYNC(`${req.params.urlCode}`, UrlData.longUrl);
 
